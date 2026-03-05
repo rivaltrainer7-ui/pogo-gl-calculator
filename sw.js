@@ -1,0 +1,36 @@
+const CACHE = "pogo-pvp-toolkit-v1";
+const ASSETS = ["./", "./index.html", "./app.js", "./sw.js", "./manifest.webmanifest"];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => Promise.all(keys.map((k) => (k === CACHE ? null : caches.delete(k)))))
+  );
+  self.clients.claim();
+});
+
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      return (
+        cached ||
+        fetch(event.request)
+          .then((resp) => {
+            try {
+              const url = new URL(event.request.url);
+              if (event.request.method === "GET" && url.origin === self.location.origin) {
+                const copy = resp.clone();
+                caches.open(CACHE).then((c) => c.put(event.request, copy));
+              }
+            } catch {}
+            return resp;
+          })
+          .catch(() => cached)
+      );
+    })
+  );
+});
