@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0f1a" />
+  <title>PoGo PvP Toolkit</title>
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <style>
+    :root{--bg:#0b0f1a;--card:#121a2a;--muted:#9fb0d0;--txt:#e9efff;--line:#22304d;--bad:#ff6a6a;--ok:#4be38d;}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
+      font-family:-apple-system,BlinkMacSystemFont,system-ui,Segoe UI,Roboto,Helvetica,Arial;}
+    .wrap{max-width:980px;margin:0 auto;padding:16px 14px 90px;}
+    h1{font-size:18px;margin:8px 0 12px;}
+    h2{font-size:14px;margin:16px 0 8px;color:var(--muted);font-weight:700;letter-spacing:.3px}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;flex:1;min-width:280px}
+    label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
+    input,select,textarea,button{width:100%;box-sizing:border-box;border-radius:12px;border:1px solid var(--line);
+      background:#0d1424;color:var(--txt);padding:10px 12px;font-size:14px}
+    textarea{min-height:86px;resize:vertical}
+    .inline{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .triple{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .btn{background:linear-gradient(180deg,#2a5dff,#1e3fae);border:0;font-weight:800}
+    .btn2{background:#0d1424;border:1px solid var(--line);font-weight:700}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);font-size:12px}
+    .out{font-variant-numeric:tabular-nums;line-height:1.55}
+    .k{color:var(--muted)}
+    .v{font-weight:800}
+    .ok{color:var(--ok);font-weight:800}
+    .bad{color:var(--bad);font-weight:800}
+    .small{font-size:12px;color:var(--muted)}
+    .warn{margin-top:8px;padding:10px 12px;border-radius:12px;background:#1b1420;border:1px solid #3a243f;color:#ffd1f0}
+    .hint{margin-top:8px;padding:10px 12px;border-radius:12px;background:#121a2a;border:1px dashed #2a3c63;color:var(--muted)}
+    .mono{font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace; font-size:12px}
+    .footerbar{position:fixed;left:0;right:0;bottom:0;background:rgba(11,15,26,.88);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
+    .footerbar .inner{max-width:980px;margin:0 auto;padding:10px 14px;display:flex;gap:10px;align-items:center}
+    .footerbar button{flex:1}
+    .split{display:flex;gap:10px;flex-wrap:wrap}
+    .split > *{flex:1;min-width:160px}
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <div class="split">
+    <h1>PoGo PvP Toolkit (Offline PWA)</h1>
+    <div style="text-align:right">
+      <span class="pill" id="offlinePill">Offline: ?</span>
+      <span class="pill">v1</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div style="flex:1;min-width:220px">
+        <label>League</label>
+        <select id="league">
+          <option value="1500">Great League (1500)</option>
+          <option value="2500">Ultra League (2500)</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:220px">
+        <label>Shadow Mode</label>
+        <select id="shadowMode">
+          <option value="off">Off (raw sheet stats)</option>
+          <option value="pvpoke">PvPoke-style (Atk×1.2, Def×0.8333)</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:220px">
+        <label>Net Bulk uses</label>
+        <select id="bulkMode">
+          <option value="floored">HP_int (floored)</option>
+          <option value="raw">raw HP decimals</option>
+        </select>
+      </div>
+    </div>
+    <div class="hint small">
+      “Auto PvPoke import” on iOS = copy/paste from PvPoke. Direct fetching is usually blocked by CORS.
+    </div>
+  </div>
+
+  <h2>Base Stats (offline DB)</h2>
+  <div class="card">
+    <div class="row">
+      <div style="flex:2;min-width:260px">
+        <label>Pokémon name</label>
+        <input id="pokeNameDB" placeholder="e.g., Jellicent" list="pokeList" />
+        <datalist id="pokeList"></datalist>
+        <div class="small" style="margin-top:6px">Saved on your device. Export/Import JSON to grow it.</div>
+      </div>
+      <div style="flex:1;min-width:180px"><label>Base ATK</label><input id="baseAtk" type="number" step="1"></div>
+      <div style="flex:1;min-width:180px"><label>Base DEF</label><input id="baseDef" type="number" step="1"></div>
+      <div style="flex:1;min-width:180px"><label>Base STA</label><input id="baseSta" type="number" step="1"></div>
+    </div>
+    <div class="row">
+      <button class="btn2" id="saveBase">Save/Update</button>
+      <button class="btn2" id="exportDB">Export DB JSON</button>
+      <label style="flex:1;min-width:240px">
+        Import DB JSON
+        <input id="importDB" type="file" accept="application/json">
+      </label>
+    </div>
+  </div>
+
+  <h2>PvPoke Import (paste)</h2>
+  <div class="card">
+    <label>Paste something that contains Name, Level, and (IVs a/d/s). Example: “Jellicent — IVs 1 / 14 / 14”</label>
+    <textarea id="pvpokePaste" placeholder="Paste PvPoke block here..."></textarea>
+    <div class="row">
+      <button class="btn2" id="parseIdeal">Parse → Ideal</button>
+      <button class="btn2" id="parseOwned">Parse → Owned</button>
+      <button class="btn2" id="clearPaste">Clear</button>
+    </div>
+    <div class="small" id="parseMsg"></div>
+  </div>
+
+  <h2>Ideal</h2>
+  <div class="card">
+    <div class="inline">
+      <div><label>Name</label><input id="idealName"></div>
+      <div><label>Level (1.0–51.0, step .5)</label><input id="idealLevel" type="number" min="1" max="51" step="0.5" value="24.5"></div>
+    </div>
+    <div class="triple">
+      <div><label>IV ATK</label><input id="idealIVa" type="number" min="0" max="15" value="0"></div>
+      <div><label>IV DEF</label><input id="idealIVd" type="number" min="0" max="15" value="15"></div>
+      <div><label>IV HP</label><input id="idealIVs" type="number" min="0" max="15" value="15"></div>
+    </div>
+    <div class="row">
+      <label style="flex:1;min-width:220px">Shadow?
+        <select id="idealShadow"><option value="0">No</option><option value="1">Yes</option></select>
+      </label>
+      <label style="flex:1;min-width:220px">Role for rating
+        <select id="role"><option value="bulky">Bulky</option><option value="squishy">Squishy</option></select>
+      </label>
+    </div>
+  </div>
+
+  <h2>Owned</h2>
+  <div class="card">
+    <div class="inline">
+      <div><label>Name</label><input id="ownedName"></div>
+      <div><label>Level (1.0–51.0, step .5)</label><input id="ownedLevel" type="number" min="1" max="51" step="0.5" value="24"></div>
+    </div>
+    <div class="triple">
+      <div><label>IV ATK</label><input id="ownedIVa" type="number" min="0" max="15" value="0"></div>
+      <div><label>IV DEF</label><input id="ownedIVd" type="number" min="0" max="15" value="15"></div>
+      <div><label>IV HP</label><input id="ownedIVs" type="number" min="0" max="15" value="15"></div>
+    </div>
+    <div class="row">
+      <label style="flex:1;min-width:220px">Shadow?
+        <select id="ownedShadow"><option value="0">No</option><option value="1">Yes</option></select>
+      </label>
+      <label style="flex:1;min-width:220px">Opponent ATK (CMP test, optional)
+        <input id="oppAtk" type="number" step="0.01" placeholder="e.g., 106.67">
+      </label>
+    </div>
+  </div>
+
+  <h2>Midpoint</h2>
+  <div class="card">
+    <div class="grid">
+      <div>
+        <label>Point A (Level/CP/ATK/DEF/HP)</label>
+        <textarea id="midA" class="mono" placeholder="Level 24
+CP 1490
+ATK 106.67
+DEF 124.34
+HP 157.06"></textarea>
+      </div>
+      <div>
+        <label>Point B (Level/CP/ATK/DEF/HP)</label>
+        <textarea id="midB" class="mono"></textarea>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn2" id="midBtn">Compute midpoint</button>
+      <button class="btn2" id="midClear">Clear</button>
+    </div>
+    <div class="out" id="midOut"></div>
+  </div>
+
+  <h2>CMP + Breakpoint Helper (fast-move damage)</h2>
+  <div class="card">
+    <div class="row">
+      <div style="flex:1;min-width:220px"><label>Attacker ATK</label><input id="bpAtk" type="number" step="0.01"></div>
+      <div style="flex:1;min-width:220px"><label>Defender DEF (A)</label><input id="bpDefA" type="number" step="0.01"></div>
+      <div style="flex:1;min-width:220px"><label>Defender DEF (B)</label><input id="bpDefB" type="number" step="0.01"></div>
+    </div>
+    <div class="row">
+      <div style="flex:1;min-width:220px"><label>Move Power</label><input id="bpPow" type="number" step="1" value="3"></div>
+      <div style="flex:1;min-width:220px"><label>STAB</label>
+        <select id="bpStab"><option value="1">No (×1.0)</option><option value="1.2">Yes (×1.2)</option></select>
+      </div>
+      <div style="flex:1;min-width:220px"><label>Effectiveness</label>
+        <select id="bpEff">
+          <option value="0.625">Resist (×0.625)</option>
+          <option value="1" selected>Neutral (×1.0)</option>
+          <option value="1.6">Super effective (×1.6)</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:220px"><label>Shadow attacker?</label>
+        <select id="bpShadowAtk"><option value="0">No</option><option value="1">Yes</option></select>
+      </div>
+      <div style="flex:1;min-width:220px"><label>Shadow defender?</label>
+        <select id="bpShadowDef"><option value="0">No</option><option value="1">Yes</option></select>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn2" id="bpBtn">Compute damage + breakpoint</button>
+    </div>
+    <div class="out" id="bpOut"></div>
+    <div class="hint small">
+      This is the standard PoGo damage model shortcut used for “did we cross a 1-damage breakpoint?” comparisons.
+    </div>
+  </div>
+
+  <h2>Results</h2>
+  <div class="row">
+    <div class="card"><div class="out" id="idealOut"></div></div>
+    <div class="card"><div class="out" id="ownedOut"></div></div>
+  </div>
+  <div class="card"><div class="out" id="compareOut"></div></div>
+</div>
+
+<div class="footerbar">
+  <div class="inner">
+    <button class="btn" id="calcBtn">Calculate</button>
+    <button class="btn2" id="swapBtn">Swap</button>
+    <button class="btn2" id="resetBtn">Reset</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
